@@ -41,7 +41,7 @@ regd_users.post("/register", (req, res) => {
             return res.status(404).json({message: "User already exists!"});
         }
     }
-    return res.status(404).json({message: "Unable to register user."});
+    return res.status(300).json({message: "Unable to register user."});
 });
 
 //only registered users can login
