@@ -20,52 +20,98 @@ public_users.post("/register", (req, res) => {
 });
 
 // Get the book list available in the shop
-public_users.get('/',function (req, res) {
-  //Write your code here
-  res.send(JSON.stringify(books,null,4));
-  return res.status(200).json(JSON.stringify(books,null,4));
+public_users.get('/', async (req, res) => {
+    try {
+        const booksList = await getBooks();
+        return res.status(200).json(booksList);
+    } catch (error) {
+        return res.status(500).json({ message: "Error retrieving books." });
+    }
 });
+function getBooks() {
+    return new Promise((resolve, reject) => {
+        setTimeout(() => {
+            resolve(books);
+        }, 100);
+    });
+}
 
 // Get book details based on ISBN
-public_users.get('/isbn/:isbn',function (req, res) {
-  //Write your code here
-  const isbn = req.params.isbn;
-  return res.status(200).json(books[isbn]);
- });
+public_users.get('/isbn/:isbn', (req, res) => {
+    const isbn = req.params.isbn;
+    getBookByISBN(isbn)
+        .then(book => {
+            if (book) {
+                return res.status(200).json(book);
+            } else {
+                return res.status(404).json({ message: "Book not found." });
+            }
+        })
+        .catch(error => {
+            return res.status(500).json({ message: "Error retrieving book details." });
+        });
+});
+function getBookByISBN(isbn) {
+    return new Promise((resolve, reject) => {
+        setTimeout(() => {
+            const book = books[isbn];
+            if (book) {
+                resolve(book);
+            } else {
+                reject(new Error("Book not found"));
+            }
+        }, 100);
+    });
+}
   
 // Get book details based on author
-public_users.get('/author/:author',function (req, res) {
-  //Write your code here
-  const author = req.params.author;
-  const keys = Object.keys(books);
-  const result = [];
-  for (let key of keys) {
-    const book = books[key];
+public_users.get('/author/:author', (req, res) => {
+    const author = req.params.author;
 
-    if (book.author === author)
-        result.push(books[key]);
-  }
- 
-  return res.status(200).json(result);
+    getBooksByAuthor(author)
+        .then(result => {
+            if (result.length > 0) {
+                return res.status(200).json(result);
+            } else {
+                return res.status(404).json({ message: "No books found for this author." });
+            }
+        })
+        .catch(error => {
+            return res.status(500).json({ message: "Error retrieving books by author." });
+        });
 });
+function getBooksByAuthor(author) {
+    return new Promise((resolve, reject) => {
+        setTimeout(() => {
+            const result = Object.values(books).filter(book => book.author === author);
+            resolve(result);
+        }, 100);
+    });
+}
 
 // Get all books based on title
-public_users.get('/title/:title',function (req, res) {
-  //Write your code here
-  const title = req.params.title;
-  const keys = Object.keys(books);
-  const result = [];
+public_users.get('/title/:title', async (req, res) => {
+    const title = req.params.title;
 
-  for (let key of keys) {
-    const book = books[key];
-
-    if (book.title === title) {
-        result.push(books[key]);
+    try {
+        const result = await getBooksByTitle(title);
+        if (result.length > 0) {
+            return res.status(200).json(result);
+        } else {
+            return res.status(404).json({ message: "No books found with this title." });
+        }
+    } catch (error) {
+        return res.status(500).json({ message: "Error retrieving books by title." });
     }
-  }
-
-  return res.status(200).json(result);
 });
+function getBooksByTitle(title) {
+    return new Promise((resolve, reject) => {
+        setTimeout(() => {
+            const result = Object.values(books).filter(book => book.title.toLowerCase() === title.toLowerCase());
+            resolve(result);
+        }, 100);
+    });
+}
 
 //  Get book review
 public_users.get('/review/:isbn',function (req, res) {
